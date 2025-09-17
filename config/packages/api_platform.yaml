@@ -1,0 +1,8 @@
+api_platform:
+    title: Fitness Programs API
+    description: "API REST pour la gestion de programmes de fitness, d'entraînements et d'exercices"
+    version: 1.0.0
+    defaults:
+        stateless: true
+        cache_headers:
+            vary: ["Content-Type", "Authorization", "Origin"]

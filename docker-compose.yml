@@ -1,0 +1,102 @@
+services:
+    # Service PHP avec Symfony
+    app:
+        build:
+            context: .
+            dockerfile: docker/php/Dockerfile
+        container_name: fitness_api_app
+        restart: unless-stopped
+        working_dir: /var/www/html
+        volumes:
+            - ./:/var/www/html
+            - ./docker/php/conf.d/xdebug.ini:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+            - ./docker/php/conf.d/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini
+        networks:
+            - fitness_network
+        depends_on:
+            - database
+        environment:
+            - APP_ENV=dev
+            - DATABASE_URL=mysql://fitness_user:fitness_password@database:3306/fitness_programs_db
+
+    # Service Nginx
+    webserver:
+        image: nginx:alpine
+        container_name: fitness_api_nginx
+        restart: unless-stopped
+        ports:
+            - "8080:80"
+        volumes:
+            - ./:/var/www/html
+            - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+            - ./docker/nginx/sites/:/etc/nginx/sites-available
+            - ./docker/nginx/conf.d/:/etc/nginx/conf.d
+        depends_on:
+            - app
+        networks:
+            - fitness_network
+
+    # Service MySQL
+    database:
+        image: mysql:8.0
+        container_name: fitness_api_mysql
+        platform: linux/arm64
+        restart: unless-stopped
+        environment:
+            MYSQL_DATABASE: fitness_programs_db
+            MYSQL_USER: fitness_user
+            MYSQL_PASSWORD: fitness_password
+            MYSQL_ROOT_PASSWORD: root_password
+        volumes:
+            - db_data:/var/lib/mysql
+            - ./docker/mysql/my.cnf:/etc/mysql/my.cnf
+        ports:
+            - "3306:3306"
+        networks:
+            - fitness_network
+
+    # Service PHPMyAdmin (optionnel, pour le debug)
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: fitness_api_phpmyadmin
+        restart: unless-stopped
+        ports:
+            - "8081:80"
+        environment:
+            PMA_HOST: database
+            PMA_USER: fitness_user
+            PMA_PASSWORD: fitness_password
+        depends_on:
+            - database
+        networks:
+            - fitness_network
+
+###> doctrine/doctrine-bundle ###
+#  database:
+#    image: postgres:${POSTGRES_VERSION:-16}-alpine
+#    environment:
+#      POSTGRES_DB: ${POSTGRES_DB:-app}
+# You should definitely change the password in production
+#      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
+#      POSTGRES_USER: ${POSTGRES_USER:-app}
+#    healthcheck:
+#      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB:-app}", "-U", "${POSTGRES_USER:-app}"]
+#      timeout: 5s
+#      retries: 5
+#      start_period: 60s
+#    volumes:
+#      - database_data:/var/lib/postgresql/data:rw
+# You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
+# - ./docker/db/data:/var/lib/postgresql/data:rw
+###< doctrine/doctrine-bundle ###
+
+networks:
+    fitness_network:
+        driver: bridge
+
+volumes:
+    db_data:
+
+    ###> doctrine/doctrine-bundle ###
+    database_data:
+###< doctrine/doctrine-bundle ###
