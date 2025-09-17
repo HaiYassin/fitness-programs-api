@@ -1,0 +1,23 @@
+api_platform:
+    title: "Fitness Programs API"
+    description: "API REST pour la gestion de programmes de fitness, d'entraînements et d'exercices"
+    version: 1.0.0
+
+    # Formats de sortie supportés
+    formats:
+        jsonld: ["application/ld+json"]
+        json: ["application/json"]
+        html: ["text/html"] # <-- pour éviter l'erreur dans le navigateur
+        csv: ["text/csv"]
+
+    # Configuration de la documentation
+    enable_swagger_ui: true
+    enable_re_doc: false
+    enable_entrypoint: true
+    enable_docs: true
+
+    # Valeurs par défaut
+    defaults:
+        stateless: true
+        cache_headers:
+            vary: ["Content-Type", "Authorization", "Origin"]
